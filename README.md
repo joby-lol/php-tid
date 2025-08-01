@@ -1,0 +1,157 @@
+# php-tid
+
+A simple and lightweight time-ordered random ID library designed for human-scale applications.
+
+## What is php-tid?
+
+php-tid is a simple, lightweight library for generating unique, time-ordered, human-readable IDs. Unlike UUIDs or
+auto-incrementing database IDs, Tids (Time-ordered IDs) are:
+
+- **Human-readable**: Formatted with optional dashes for better readability (e.g., "abcd-efgh")
+- **Time-ordered**: Can be represented as integers or strings, and both are naturally sortable by rough creation time
+- **Compact**: Uses alphanumeric encoding for concise representation of the underlying integer (they are currently eight
+  characters, but will expand slowly as time progresses)
+- **URL-safe**: No special characters that are hard to type or need encoding in URLs
+- **Privacy-conscious**: Drops timestamp precision to avoid leaking exact creation times
+- **Ergonomic**: Strings can be easily converted from the concise format back into the underlying integer, using dashes
+  or not for readability
+
+## Why php-tid?
+
+Not every project needs globally unique IDs or distributed systems. For many smaller applications, simpler solutions are
+often better:
+
+- **Human scale**: Designed for applications where IDs might be seen, shared, or even typed by humans
+- **Simplicity**: No external dependencies or complex setup
+- **Lightweight**: Minimal overhead and easy integration
+- **Chronological**: Natural time-based ordering at a resolution of about 72 hours, without revealing exact timestamps
+
+## Installation
+
+```bash
+composer require joby/tid
+```
+
+## Basic Usage
+
+### Creating a new Tid
+
+```php
+use Joby\Tid\Tid;
+
+// Generate a new Tid
+$tid = new Tid();
+echo $tid; // Outputs something like "abcd-efgh"
+
+// Get the compact representation (without dashes)
+echo $tid->compactString(); // Outputs something like "abcdefgh"
+```
+
+### Creating a Tid from an existing string
+
+```php
+use Joby\Tid\Tid;
+
+// Create a Tid from a string
+$tid = Tid::fromString("abcd-efgh");
+// or
+$tid = Tid::fromString("abcdefgh"); // Dashes are optional when parsing
+```
+
+### Working with timestamps
+
+```php
+use Joby\Tid\Tid;
+
+$tid = new Tid();
+
+// Get the approximate timestamp when this Tid was created
+$timestamp = $tid->time();
+echo date('Y-m-d H:i:s', $timestamp);
+
+// Get the entropy bits (random portion) of the Tid
+$entropy = $tid->entropy();
+```
+
+### Validation
+
+```php
+use Joby\Tid\TidHelper;
+
+// Validate a Tid string
+if (TidHelper::validateString("abcd-efgh")) {
+    echo "Valid Tid string!";
+}
+
+// Validate a Tid integer
+$int = TidHelper::toInt("abcd-efgh");
+if (TidHelper::validateInt($int)) {
+    echo "Valid Tid integer!";
+}
+```
+
+## Advanced Usage
+
+### Using the underlying integer
+
+```php
+use Joby\Tid\Tid;
+use Joby\Tid\TidHelper;
+
+// Create a Tid
+$tid = new Tid();
+
+// Get the underlying integer
+$int = $tid->id;
+
+// Convert back to a Tid
+$sameTid = new Tid($int);
+// or
+$sameTid = Tid::fromInt($int);
+```
+
+### Serialization
+
+Tid objects can be serialized and unserialized:
+
+```php
+use Joby\Tid\Tid;
+
+$tid = new Tid();
+$serialized = serialize($tid);
+$unserialized = unserialize($serialized);
+
+echo $tid === $unserialized; // false (different objects)
+echo $tid->id === $unserialized->id; // true (same ID value)
+```
+
+### Using with databases
+
+Tids can be stored in your database as either strings or integers:
+
+```php
+// Store as a string (more readable)
+$db->query("INSERT INTO users (id, name) VALUES (?, ?)", [(string)$tid, "John"]);
+
+// Store as an integer (more efficient)
+$db->query("INSERT INTO users (id, name) VALUES (?, ?)", [$tid->id, "John"]);
+```
+
+## How It Works
+
+Each Tid consists of a single integer value with two parts:
+
+1. A timestamp component (with 18 precision bits dropped for privacy and to make room for entropy)
+2. Random entropy bits to ensure uniqueness
+
+The combination is encoded in base-36 (alphanumeric) and formatted with dashes for readability.
+
+## Limitations
+
+- Not designed or suitable for distributed systems requiring guaranteed global uniqueness
+- Time ordering is approximate due to the dropped precision bits
+- No built-in collision detection (though collisions are extremely unlikely at human scale applications)
+
+## License
+
+MIT License - see the LICENSE file for details.
