@@ -142,4 +142,12 @@ class TidTest extends TestCase
 
         $this->assertEquals((string)$tid1, (string)$tid2);
     }
+
+    public function testJsonSerialization()
+    {
+        $id = new Tid();
+        $json = json_encode($id);
+        $this->assertIsString($json);
+        $this->assertEquals($id->id, json_decode($json));
+    }
 }

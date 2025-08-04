@@ -26,12 +26,13 @@
 namespace Joby\Tid;
 
 use InvalidArgumentException;
+use JsonSerializable;
 use Stringable;
 
 /**
  * Lightweight time-ordered ID class that is an integer under the hood but is stringable for more human-readable output.
  */
-readonly class Tid implements Stringable
+readonly class Tid implements Stringable, JsonSerializable
 {
     public int $id;
 
@@ -74,5 +75,10 @@ readonly class Tid implements Stringable
     public function compactString(): string
     {
         return str_replace('-', '', $this->__toString());
+    }
+
+    public function jsonSerialize(): int
+    {
+        return $this->id;
     }
 }
