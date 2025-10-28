@@ -3,7 +3,7 @@ name: Tests
 on: [push]
 
 jobs:
-  build-test:
+  run-tests:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -12,10 +12,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: php-actions/composer@v6
+        with:
+          php_version: ${{ matrix.php-versions }}
+          dev: true
       - uses: php-actions/phpunit@v4
         with:
           php_version: ${{ matrix.php-versions }}
           configuration: phpunit.xml
+  static-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: php-actions/composer@v6
+        with:
+          php_version: 8.4
+          dev: true
       - uses: php-actions/phpstan@v3
         with:
           php_version: 8.4
+          configuration: phpstan.neon
