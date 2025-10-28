@@ -113,7 +113,7 @@ class TidHelper
     /**
      * Validate an integer is a valid Tid, which means that it is positive, and that its earliest time is not negative
      * or in the future.
-     * @phpstan-assert $int > 0
+     * @phpstan-assert positive-int $int
      */
     public static function validateInt(int $int): bool
     {
