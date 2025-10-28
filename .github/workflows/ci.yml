@@ -14,9 +14,8 @@ jobs:
       - uses: php-actions/composer@v6
       - uses: php-actions/phpunit@v4
         with:
-          version: 12
           php_version: ${{ matrix.php-versions }}
           configuration: phpunit.xml
-      - uses: php-actions/phpstan@v4
+      - uses: php-actions/phpstan@v3
         with:
           php_version: 8.4
