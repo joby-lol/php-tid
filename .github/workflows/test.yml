@@ -1,9 +1,9 @@
-name: Tests
+name: Continuous Integration
 
 on: [push]
 
 jobs:
-  run-tests:
+  tests:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -14,7 +14,6 @@ jobs:
       - uses: php-actions/composer@v6
         with:
           php_version: ${{ matrix.php-versions }}
-          dev: yes
       - uses: php-actions/phpunit@v4
         with:
           php_version: ${{ matrix.php-versions }}
@@ -26,7 +25,6 @@ jobs:
       - uses: php-actions/composer@v6
         with:
           php_version: 8.4
-          dev: yes
       - uses: php-actions/phpstan@v3
         with:
           php_version: 8.4
