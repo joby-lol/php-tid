@@ -36,7 +36,7 @@ readonly class Tid implements Stringable, JsonSerializable
 {
     public int $id;
 
-    public function __construct(int $id = null)
+    public function __construct(int|null $id = null)
     {
         if (is_null($id)) {
             $this->id = TidHelper::generateInt();

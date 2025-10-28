@@ -23,6 +23,7 @@
     "phpunit/phpunit": "^12.3"
   },
   "require": {
+    "php": ">=8.1",
     "ext-ctype": "*"
   }
 }
