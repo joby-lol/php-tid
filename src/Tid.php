@@ -104,6 +104,20 @@ readonly class Tid implements Stringable, JsonSerializable
         return new Tid($int);
     }
 
+    public static function hmacGenerate(string $source, string $secret): Tid
+    {
+        $hash = hash_hmac('sha256', $source, $secret);
+        $int = (int) base_convert(substr($hash, 0, 16), 16, 10);
+        // make room for 4 version bits and top 2 msb values of 01
+        $int = $int >> 6;
+        // lsb is 00 for version 0
+        $int = $int << 4;
+        // make 63rd bi 1
+        $int = $int | 1 << 62;
+        // return finished Tid
+        return new Tid($int);
+    }
+
     public function __construct(int $id)
     {
         if ($id < 0) {

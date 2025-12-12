@@ -4,27 +4,23 @@ A simple and lightweight time-ordered random ID library designed for human-scale
 
 ## What is php-tid?
 
-php-tid is a simple, lightweight library for generating unique, time-ordered, human-readable IDs. Unlike UUIDs or
-auto-incrementing database IDs, Tids (Time-ordered IDs) are:
+php-tid is a simple, lightweight library for generating unique, time-ordered, human-readable IDs. Unlike full UUIDs or simple auto-incrementing database IDs, Tids are:
 
-- **Human-readable**: Formatted with optional dashes for better readability (e.g., "abcd-efgh")
+- **Human-readable**: String representations as base 36 integers for more compact format for URLs, markup, etc.
 - **Time-ordered**: Can be represented as integers or strings, and both are naturally sortable by rough creation time
-- **Compact**: Uses alphanumeric encoding for concise representation of the underlying integer (they are currently eight
-  characters, but will expand slowly as time progresses)
 - **URL-safe**: No special characters that are hard to type or need encoding in URLs
-- **Privacy-conscious**: Drops timestamp precision to avoid leaking exact creation times
-- **Ergonomic**: Strings can be easily converted from the concise format back into the underlying integer, using dashes
-  or not for readability
+- **Privacy-conscious**: Can drop optional amounts of timestamp precision to avoid leaking exact creation times
+- **Ergonomic**: Strings can be easily converted from the concise format back into the underlying integer, or vice versa
+- **Variable-length**: Currently all values are 63 bits, meaning that they will fit in the default integer representation of almost any language/environment, but the length is not fixed so future versions may expand that length if needed.
 
 ## Why php-tid?
 
-Not every project needs globally unique IDs or distributed systems. For many smaller applications, simpler solutions are
-often better:
+Not every project needs guaranteed globally unique IDs or distributed systems. For many smaller applications, simpler solutions are often better:
 
 - **Human scale**: Designed for applications where IDs might be seen, shared, or even typed by humans
 - **Simplicity**: No external dependencies or complex setup
 - **Lightweight**: Minimal overhead and easy integration
-- **Chronological**: Natural time-based ordering at a resolution of about 72 hours, without revealing exact timestamps
+- **Chronological**: Natural time-based ordering, with options to keep varying amounts of precision hidden
 
 ## Installation
 
@@ -40,11 +36,12 @@ composer require joby/tid
 use Joby\Tid\Tid;
 
 // Generate a new Tid
-$tid = new Tid();
-echo $tid; // Outputs something like "abcd-efgh"
+// Default is version 0, which is fully random
+// Version 1 keeps the full timestamp, and versions 2-4 trim increasing amounts of precision from the timestamp
+$tid = Tid::generate(Tid::VERSION_1);
 
-// Get the compact representation (without dashes)
-echo $tid->compactString(); // Outputs something like "abcdefgh"
+// 
+
 ```
 
 ### Creating a Tid from an existing string
@@ -53,7 +50,7 @@ echo $tid->compactString(); // Outputs something like "abcdefgh"
 use Joby\Tid\Tid;
 
 // Create a Tid from a string
-$tid = Tid::fromString("abcd-efgh");
+$tid = Tid::fromString("abcdefgh");
 // or
 $tid = Tid::fromString("abcdefgh"); // Dashes are optional when parsing
 ```
@@ -66,28 +63,12 @@ use Joby\Tid\Tid;
 $tid = new Tid();
 
 // Get the approximate timestamp when this Tid was created
+// This returns the lower bound of when this Tid was created
 $timestamp = $tid->time();
 echo date('Y-m-d H:i:s', $timestamp);
 
 // Get the entropy bits (random portion) of the Tid
-$entropy = $tid->entropy();
-```
-
-### Validation
-
-```php
-use Joby\Tid\TidHelper;
-
-// Validate a Tid string
-if (TidHelper::validateString("abcd-efgh")) {
-    echo "Valid Tid string!";
-}
-
-// Validate a Tid integer
-$int = TidHelper::toInt("abcd-efgh");
-if (TidHelper::validateInt($int)) {
-    echo "Valid Tid integer!";
-}
+$entropy = $tid->random();
 ```
 
 ## Advanced Usage
@@ -137,37 +118,35 @@ $db->query("INSERT INTO users (id, name) VALUES (?, ?)", [(string)$tid, "John"])
 $db->query("INSERT INTO users (id, name) VALUES (?, ?)", [$tid->id, "John"]);
 ```
 
+### Deterministic generation
+
+Tids can also be generated deterministically, if you need to use them in a manner similar to a hash. In this case they are produced as version 0 Tids with no time data, and their random data is produced by truncating a sha256 hmac hash of the provided string.
+
+```php
+use Joby\Tid\Tid;
+
+// generate from a string
+$tid = Tid::hashGenerate('some value to generate from', 'secret key');
+```
+
 ## How It Works
 
-Each Tid consists of a single integer value with two parts:
+Each Tid consists of a single integer value with three parts (starting with the least significant bit):
 
-1. A timestamp component (with 18 precision bits dropped for privacy and to make room for entropy)
-2. Random entropy bits to ensure uniqueness
+1. 4-bit version identifier, from which the other two parts' lengths are determined
+2. 0 or more bits of random data
+3. 0 or more bits of time data, with varying amounts of precision dropped by truncating least significant bits
 
-The combination is encoded in base-36 (alphanumeric) and formatted with dashes for readability.
+The combination is encoded in base-36 (alphanumeric) when a string representation is required, but can also be stored as an integer.
 
 ## Limitations
 
 - Not designed or suitable for distributed systems requiring guaranteed global uniqueness
-- Time ordering is approximate due to the dropped precision bits
+- Time ordering may be approximate due to the dropped precision bits
 - No built-in collision detection (though collisions are extremely unlikely at human scale applications)
 
-### Collision probability
+## Number of IDs available
 
-The time portion of a Tid resets every 2^18 seconds, which is roughly 72 hours. There are 32 bits of entropy. This
-leaves 2^14 Tids available per second. So the odds of any given Tid colliding can be calculated by the frequency they
-are being generated by in your app:
+For fully-random version 0 Tids, there are 2^58 possible IDs, roughly 288 quadrillion.
 
-| Frequency of generation | Odds of collison (1 in) | Odds of collision in 72h                         |
-|-------------------------|-------------------------|--------------------------------------------------|
-| 1/second                | 16,384                  | ~100%                                            |
-| 1/minute                | 983,040                 | ~0.4%                                            |
-| 1/hour                  | ~59 million             | ~0.00006%                                        |
-| 1/day                   | ~1.4 billion            | ~0.0000001%                                      |
-| 1/week                  | ∞                       | for intervals over 72h collisions are impossible |
-
-A rough rule of thumb is that to preserve better than one in a million odds of collisions per 72 hour window, you
-shouldn't use TIDs for systems generating more than about 1.3 IDs per hour. So it's perfectly acceptable for things like
-blog posts on personal sites, or even microblogging on a small scale. If you implement collision detection in your app
-they're even potentially viable for higher-volume things. They would never really be appropriate for things like logging
-though, where there might be thousands of entries being generated per hour or more.
+For versions 1 through 4, regardless of version there are on average roughly 1.4 billion possible Tids available per day.

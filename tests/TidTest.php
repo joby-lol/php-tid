@@ -68,6 +68,14 @@ class TidTest extends TestCase
         $this->assertEquals($tid->id >> 4 & ((1 << 32) - 1), $tid->random());
     }
 
+    public function test_hmac_generation()
+    {
+        $tid = Tid::hmacGenerate('foo', 'bar');
+        $this->assertEquals(Tid::VERSION_0, $tid->version());
+        $this->assertEquals(4980502661450870528, $tid->id);
+        $this->assertEquals('11u80ugb7uj28', (string)$tid);
+    }
+
     public function test_invalid_version_generation()
     {
         $this->expectException(InvalidArgumentException::class);
