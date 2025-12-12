@@ -18,61 +18,72 @@ class TidTest extends TestCase
         $tid = Tid::generate(Tid::VERSION_0);
         $this->assertEquals(Tid::VERSION_0, $tid->version());
         $this->assertEquals($tid, Tid::fromString((string)$tid));
-        $this->assertEquals($tid, Tid::fromInt($tid->id));
+        $this->assertEquals($tid, Tid::fromInt($tid->value));
         $this->assertEquals(0, $tid->time());
         $this->assertEquals(59, $tid->entropyBits());
-        $this->assertEquals($tid->id >> 4 & ((1 << 59) - 1), $tid->random());
+        $this->assertEquals($tid->value >> 4 & ((1 << 59) - 1), $tid->random());
     }
 
-    public function test_version_1()
+    public function test_version_1_0()
     {
-        $tid = Tid::generate(Tid::VERSION_1);
-        $this->assertEquals(Tid::VERSION_1, $tid->version());
+        $tid = Tid::generate(Tid::VERSION_1_0);
+        $this->assertEquals(Tid::VERSION_1_0, $tid->version());
         $this->assertEquals($tid, Tid::fromString((string)$tid));
-        $this->assertEquals($tid, Tid::fromInt($tid->id));
+        $this->assertEquals($tid, Tid::fromInt($tid->value));
         $this->assertGreaterThanOrEqual(time(), $tid->time());
         $this->assertEquals(14, $tid->entropyBits());
-        $this->assertEquals($tid->id >> 4 & ((1 << 14) - 1), $tid->random());
+        $this->assertEquals($tid->value >> 4 & ((1 << 14) - 1), $tid->random());
     }
 
-    public function test_version_2()
+    public function test_version_1_1()
     {
-        $tid = Tid::generate(Tid::VERSION_2);
-        $this->assertEquals(Tid::VERSION_2, $tid->version());
+        $tid = Tid::generate(Tid::VERSION_1_1);
+        $this->assertEquals(Tid::VERSION_1_1, $tid->version());
         $this->assertEquals($tid, Tid::fromString((string)$tid));
-        $this->assertEquals($tid, Tid::fromInt($tid->id));
+        $this->assertEquals($tid, Tid::fromInt($tid->value));
         $this->assertGreaterThanOrEqual(intdiv(time(), 256), $tid->time());
         $this->assertEquals(22, $tid->entropyBits());
-        $this->assertEquals($tid->id >> 4 & ((1 << 22) - 1), $tid->random());
+        $this->assertEquals($tid->value >> 4 & ((1 << 22) - 1), $tid->random());
     }
 
-    public function test_version_3()
+    public function test_version_1_2()
     {
-        $tid = Tid::generate(Tid::VERSION_3);
-        $this->assertEquals(Tid::VERSION_3, $tid->version());
+        $tid = Tid::generate(Tid::VERSION_1_2);
+        $this->assertEquals(Tid::VERSION_1_2, $tid->version());
         $this->assertEquals($tid, Tid::fromString((string)$tid));
-        $this->assertEquals($tid, Tid::fromInt($tid->id));
+        $this->assertEquals($tid, Tid::fromInt($tid->value));
         $this->assertGreaterThanOrEqual(intdiv(time(), 65536), $tid->time());
         $this->assertEquals(30, $tid->entropyBits());
-        $this->assertEquals($tid->id >> 4 & ((1 << 30) - 1), $tid->random());
+        $this->assertEquals($tid->value >> 4 & ((1 << 30) - 1), $tid->random());
     }
 
-    public function test_version_4()
+    public function test_version_1_3()
     {
-        $tid = Tid::generate(Tid::VERSION_4);
-        $this->assertEquals(Tid::VERSION_4, $tid->version());
+        $tid = Tid::generate(Tid::VERSION_1_3);
+        $this->assertEquals(Tid::VERSION_1_3, $tid->version());
         $this->assertEquals($tid, Tid::fromString((string)$tid));
-        $this->assertEquals($tid, Tid::fromInt($tid->id));
+        $this->assertEquals($tid, Tid::fromInt($tid->value));
         $this->assertGreaterThanOrEqual(intdiv(time(), 262144), $tid->time());
         $this->assertEquals(32, $tid->entropyBits());
-        $this->assertEquals($tid->id >> 4 & ((1 << 32) - 1), $tid->random());
+        $this->assertEquals($tid->value >> 4 & ((1 << 32) - 1), $tid->random());
+    }
+
+    public function test_version_1_4()
+    {
+        $tid = Tid::generate(Tid::VERSION_1_4);
+        $this->assertEquals(Tid::VERSION_1_4, $tid->version());
+        $this->assertEquals($tid, Tid::fromString((string)$tid));
+        $this->assertEquals($tid, Tid::fromInt($tid->value));
+        $this->assertGreaterThanOrEqual(intdiv(time(), 1048576), $tid->time());
+        $this->assertEquals(34, $tid->entropyBits());
+        $this->assertEquals($tid->value >> 4 & ((1 << 34) - 1), $tid->random());
     }
 
     public function test_hmac_generation()
     {
         $tid = Tid::hmacGenerate('foo', 'bar');
         $this->assertEquals(Tid::VERSION_0, $tid->version());
-        $this->assertEquals(4980502661450870528, $tid->id);
+        $this->assertEquals(4980502661450870528, $tid->value);
         $this->assertEquals('11u80ugb7uj28', (string)$tid);
     }
 
@@ -97,7 +108,7 @@ class TidTest extends TestCase
 
     public function test_json_serialization()
     {
-        $tid = Tid::generate(Tid::VERSION_1);
+        $tid = Tid::generate(Tid::VERSION_1_0);
         $this->assertEquals('"' . (string)$tid . '"', json_encode($tid));
     }
 }

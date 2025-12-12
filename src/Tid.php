@@ -15,43 +15,43 @@ use Stringable;
 /**
  * Lightweight time-ordered ID class that is an integer under the hood but is stringable for more human-readable output. String representations will be 10 characters long for years to come, but will grow as the ID integers increase in size. The IDs are sortable by generation time, in both integer and string forms, and the resolution of that sorting is adjustable by picking versions that trim different numbers of bits from the timestamp in favor of more random bits.
  */
-readonly class Tid implements Stringable, JsonSerializable
+class Tid implements Stringable, JsonSerializable
 {
 
     /**
      * Version 0, reserved for entirely random IDs with no time information in them at all. Random IDs are somewhat different, in that they will always occupy the full 63 bits, their most significant bit will always be one (to stabilize their string length), leaving 58 entirely random bits.
      */
-    public const int VERSION_0 = 0;
+    public const VERSION_0 = 0;
 
     /**
-     * Version 1, with full second resolution timestamp and 11 random bits.
+     * Version 1.1, with full second resolution timestamp and 11 random bits.
      */
-    public const int VERSION_1 = 1;
+    public const VERSION_1_0 = 1;
 
     /**
-     * Version 2, trims 8 bits for a resolution of about 4.25 minutes, wiht 19 random bits.
+     * Version 1.2, trims 8 bits for a resolution of about 4.25 minutes, with 19 random bits.
      */
-    public const int VERSION_2 = 2;
+    public const VERSION_1_1 = 2;
 
     /**
-     * Version 3, trims 16 bits for a resolution of about 18 hours, with 27 random bits.
+     * Version 1.3, trims 16 bits for a resolution of about 18 hours, with 27 random bits.
      */
-    public const int VERSION_3 = 3;
+    public const VERSION_1_2 = 3;
 
     /**
-     * Version 4, trims 18 bits for a resolution of about 3 days, with 29 random bits.
+     * Version 1.4, trims 18 bits for a resolution of about 3 days, with 29 random bits.
      */
-    public const int VERSION_4 = 4;
+    public const VERSION_1_3 = 4;
 
     /**
-     * Version 5, trims 20 bits for a resolution of about 12 days, with 31 random bits.
+     * Version 1.5, trims 20 bits for a resolution of about 12 days, with 31 random bits.
      */
-    public const int VERSION_5 = 5;
+    public const VERSION_1_4 = 5;
 
     /**
      * Configuration for each supported version of Tid, mapping version numbers to arrays of [dropped bits, entropy bits].
      */
-    public const array VERSION_CONFIGS = [
+    public const VERSION_CONFIGS = [
         0 => [64, 59],
         1 => [0, 14],
         2 => [8, 22],
@@ -63,7 +63,7 @@ readonly class Tid implements Stringable, JsonSerializable
     /**
      * @var int<0,max> The integer ID value. Should be a positive integer, and as of 2025 all defined versions fit in 63 bits for ease of use and compatibility.
      */
-    public int $id;
+    public readonly int $value;
 
     public static function fromString(string $tid): Tid
     {
@@ -123,7 +123,7 @@ readonly class Tid implements Stringable, JsonSerializable
         if ($id < 0) {
             throw new InvalidArgumentException('Tid integer must not be negative');
         }
-        $this->id = $id;
+        $this->value = $id;
         if (!array_key_exists($this->version(), self::VERSION_CONFIGS)) {
             throw new InvalidArgumentException('Unsupported Tid version');
         }
@@ -134,7 +134,7 @@ readonly class Tid implements Stringable, JsonSerializable
      */
     public function version(): int
     {
-        return $this->id & 0x0F;
+        return $this->value & 0x0F;
     }
 
     /**
@@ -149,7 +149,7 @@ readonly class Tid implements Stringable, JsonSerializable
         assert(array_key_exists($version, self::VERSION_CONFIGS));
         $droppedBits = self::VERSION_CONFIGS[$version][0];
         $entropyBits = self::VERSION_CONFIGS[$version][1];
-        $int = $this->id >> 4; // remove version bits
+        $int = $this->value >> 4; // remove version bits
         $int = $int >> $entropyBits; // remove entropy bits
         $int = $int << $droppedBits; // shift back to original position
         return $int;
@@ -162,11 +162,11 @@ readonly class Tid implements Stringable, JsonSerializable
     {
         $version = $this->version();
         if ($version === self::VERSION_0) {
-            return $this->id >> 4; // remove version bits
+            return $this->value >> 4; // remove version bits
         }
         assert(array_key_exists($version, self::VERSION_CONFIGS));
         $entropyBits = self::VERSION_CONFIGS[$version][1];
-        $int = $this->id >> 4; // remove version bits
+        $int = $this->value >> 4; // remove version bits
         $int = $int & ((1 << $entropyBits) - 1); // mask to get only the random bits
         return $int;
     }
@@ -181,7 +181,7 @@ readonly class Tid implements Stringable, JsonSerializable
 
     public function __toString(): string
     {
-        return base_convert((string)$this->id, 10, 36);
+        return base_convert((string)$this->value, 10, 36);
     }
 
     public function jsonSerialize(): string

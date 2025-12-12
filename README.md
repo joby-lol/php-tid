@@ -39,23 +39,29 @@ use Joby\Tid\Tid;
 // Default is version 0, which is fully random
 // Version 1 keeps the full timestamp, and versions 2-4 trim increasing amounts of precision from the timestamp
 $tid = Tid::generate(Tid::VERSION_1);
-
-// 
-
 ```
 
-### Creating a Tid from an existing string
+### Tid versions
+
+| Version | Time resolution    | Random bits | String length | Availability     |
+| ------- | ------------------ | ----------- | ------------- | ---------------- |
+| 0       | N/A (no time data) | 58          | 13            | ~288 quadrillion |
+| 1.0     | 1 second           | 11          | 10            | ~1.4 billion/day |
+| 1.1     | ~4.25 minutes      | 19          | 10            | ~1.4 billion/day |
+| 1.2     | ~18 hours          | 27          | 10            | ~1.4 billion/day |
+| 1.3     | ~3 days            | 29          | 10            | ~1.4 billion/day |
+| 1.4     | ~12 days           | 31          | 10            | ~1.4 billion/day |
+
+### Tid deterministically derived from string
 
 ```php
 use Joby\Tid\Tid;
 
 // Create a Tid from a string
 $tid = Tid::fromString("abcdefgh");
-// or
-$tid = Tid::fromString("abcdefgh"); // Dashes are optional when parsing
 ```
 
-### Working with timestamps
+### Getting Tid parts
 
 ```php
 use Joby\Tid\Tid;
@@ -65,7 +71,6 @@ $tid = new Tid();
 // Get the approximate timestamp when this Tid was created
 // This returns the lower bound of when this Tid was created
 $timestamp = $tid->time();
-echo date('Y-m-d H:i:s', $timestamp);
 
 // Get the entropy bits (random portion) of the Tid
 $entropy = $tid->random();
@@ -77,13 +82,12 @@ $entropy = $tid->random();
 
 ```php
 use Joby\Tid\Tid;
-use Joby\Tid\TidHelper;
 
 // Create a Tid
 $tid = new Tid();
 
 // Get the underlying integer
-$int = $tid->id;
+$int = $tid->value;
 
 // Convert back to a Tid
 $sameTid = new Tid($int);
@@ -144,9 +148,3 @@ The combination is encoded in base-36 (alphanumeric) when a string representatio
 - Not designed or suitable for distributed systems requiring guaranteed global uniqueness
 - Time ordering may be approximate due to the dropped precision bits
 - No built-in collision detection (though collisions are extremely unlikely at human scale applications)
-
-## Number of IDs available
-
-For fully-random version 0 Tids, there are 2^58 possible IDs, roughly 288 quadrillion.
-
-For versions 1 through 4, regardless of version there are on average roughly 1.4 billion possible Tids available per day.
