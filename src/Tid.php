@@ -65,17 +65,32 @@ class Tid implements Stringable, JsonSerializable
      */
     public readonly int $value;
 
+    /**
+     * Create a Tid object from its string representation.
+     * 
+     * @throws InvalidArgumentException if the string is not a valid Tid.
+     */
     public static function fromString(string $tid): Tid
     {
         $int = base_convert(strtolower($tid), 36, 10);
         return new Tid(intval($int));
     }
 
+    /**
+     * Create a Tid object from its integer representation.
+     * 
+     * @throws InvalidArgumentException if the integer is negative.
+     */
     public static function fromInt(int $tid): Tid
     {
         return new Tid($tid);
     }
 
+    /**
+     * Generate a new Tid of the specified version.
+     * 
+     * @throws InvalidArgumentException if the version is unsupported.
+     */
     public static function generate(int $version = self::VERSION_0): Tid
     {
         // special case for fully-random ones
@@ -104,6 +119,9 @@ class Tid implements Stringable, JsonSerializable
         return new Tid($int);
     }
 
+    /**
+     * Generate a Tid deterministically from a source string and secret, using HMAC to produce a pseudo-random but deterministic value.
+     */
     public static function hmacGenerate(string $source, string $secret): Tid
     {
         // hmac to get a deterministic but unpredictable hash and truncate to 64 bits
@@ -119,6 +137,11 @@ class Tid implements Stringable, JsonSerializable
         return new Tid($int);
     }
 
+    /**
+     * Construct a Tid object from an integer representation.
+     * 
+     * @throws InvalidArgumentException if the integer is not a valid Tid
+     */
     public function __construct(int $id)
     {
         if ($id < 0) {
@@ -180,11 +203,17 @@ class Tid implements Stringable, JsonSerializable
         return self::VERSION_CONFIGS[$this->version()][1];
     }
 
+    /**
+     * Get the string representation of the Tid, which is a base36 encoding of the integer value.
+     */
     public function __toString(): string
     {
         return base_convert((string)$this->value, 10, 36);
     }
 
+    /**
+     * Tids serialize to JSON as their string representation.
+     */
     public function jsonSerialize(): string
     {
         return $this->__toString();
