@@ -1,26 +1,9 @@
 <?php
 
 /**
- * Tid Time-ordered IDs: https://go.joby.lol/php-tid/
- * MIT License: Copyright (c) 2025 Joby Elliott
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ * Tid Time-ordered IDs: https://github.com/joby-lol/php-tid
+ * (c) 2025 Joby Elliott code@joby.lol
+ * MIT License https://opensource.org/licenses/MIT
  */
 
 namespace Joby\Tid;
@@ -30,124 +13,83 @@ use PHPUnit\Framework\TestCase;
 
 class TidTest extends TestCase
 {
-    public function testConstructorWithoutParameter()
+    public function test_version_0()
     {
-        // Test that a new Tid is created with a valid ID when no parameter is provided
-        $tid = new Tid();
-        $this->assertIsInt($tid->id);
-        $this->assertTrue(TidHelper::validateInt($tid->id));
+        $tid = Tid::generate(Tid::VERSION_0);
+        $this->assertEquals(Tid::VERSION_0, $tid->version());
+        $this->assertEquals($tid, Tid::fromString((string)$tid));
+        $this->assertEquals($tid, Tid::fromInt($tid->id));
+        $this->assertEquals(0, $tid->time());
+        $this->assertEquals(59, $tid->entropyBits());
+        $this->assertEquals($tid->id >> 4 & ((1 << 59) - 1), $tid->random());
     }
 
-    public function testConstructorWithParameter()
+    public function test_version_1()
     {
-        // Test that a Tid can be created with a valid ID
-        $id = TidHelper::generateInt();
-        $tid = new Tid($id);
-        $this->assertEquals($id, $tid->id);
+        $tid = Tid::generate(Tid::VERSION_1);
+        $this->assertEquals(Tid::VERSION_1, $tid->version());
+        $this->assertEquals($tid, Tid::fromString((string)$tid));
+        $this->assertEquals($tid, Tid::fromInt($tid->id));
+        $this->assertGreaterThanOrEqual(time(), $tid->time());
+        $this->assertEquals(14, $tid->entropyBits());
+        $this->assertEquals($tid->id >> 4 & ((1 << 14) - 1), $tid->random());
     }
 
-    public function testConstructorWithInvalidParameter()
+    public function test_version_2()
     {
-        // Test that an exception is thrown when an invalid ID is provided
+        $tid = Tid::generate(Tid::VERSION_2);
+        $this->assertEquals(Tid::VERSION_2, $tid->version());
+        $this->assertEquals($tid, Tid::fromString((string)$tid));
+        $this->assertEquals($tid, Tid::fromInt($tid->id));
+        $this->assertGreaterThanOrEqual(intdiv(time(), 256), $tid->time());
+        $this->assertEquals(22, $tid->entropyBits());
+        $this->assertEquals($tid->id >> 4 & ((1 << 22) - 1), $tid->random());
+    }
+
+    public function test_version_3()
+    {
+        $tid = Tid::generate(Tid::VERSION_3);
+        $this->assertEquals(Tid::VERSION_3, $tid->version());
+        $this->assertEquals($tid, Tid::fromString((string)$tid));
+        $this->assertEquals($tid, Tid::fromInt($tid->id));
+        $this->assertGreaterThanOrEqual(intdiv(time(), 65536), $tid->time());
+        $this->assertEquals(30, $tid->entropyBits());
+        $this->assertEquals($tid->id >> 4 & ((1 << 30) - 1), $tid->random());
+    }
+
+    public function test_version_4()
+    {
+        $tid = Tid::generate(Tid::VERSION_4);
+        $this->assertEquals(Tid::VERSION_4, $tid->version());
+        $this->assertEquals($tid, Tid::fromString((string)$tid));
+        $this->assertEquals($tid, Tid::fromInt($tid->id));
+        $this->assertGreaterThanOrEqual(intdiv(time(), 262144), $tid->time());
+        $this->assertEquals(32, $tid->entropyBits());
+        $this->assertEquals($tid->id >> 4 & ((1 << 32) - 1), $tid->random());
+    }
+
+    public function test_invalid_version_generation()
+    {
         $this->expectException(InvalidArgumentException::class);
-        new Tid(-1); // Negative IDs are invalid
+        Tid::generate(99);
     }
 
-    public function testFromString()
+    public function test_invalid_version_from_constructor()
     {
-        // Test that a Tid can be created from a valid string
-        $id = TidHelper::generateInt();
-        $string = TidHelper::toString($id);
-        $tid = Tid::fromString($string);
-        $this->assertEquals($id, $tid->id);
+        // NOTE: if versions all the way through 15 are supported in the future, this test will need to be updated/removed
+        $this->expectException(InvalidArgumentException::class);
+        new Tid(15);
     }
 
-    public function testFromInt()
+    public function test_constructor_with_negative_integer()
     {
-        // Test that a Tid can be created from a valid integer
-        $id = TidHelper::generateInt();
-        $tid = Tid::fromInt($id);
-        $this->assertEquals($id, $tid->id);
+        $this->expectException(InvalidArgumentException::class);
+        new Tid(-1);
     }
 
-    public function testTime()
+    public function test_json_serialization()
     {
-        // Test that the time method returns the correct timestamp
-        $id = TidHelper::generateInt();
-        $tid = new Tid($id);
-        $this->assertEquals(TidHelper::earliestTime($id), $tid->time());
-    }
-
-    public function testEntropy()
-    {
-        // Test that the entropy method returns the correct entropy bits
-        $id = TidHelper::generateInt();
-        $tid = new Tid($id);
-        $this->assertEquals(TidHelper::entropyBits($id), $tid->entropy());
-    }
-
-    public function testToString()
-    {
-        // Test that the __toString method returns the correct string representation
-        $id = TidHelper::generateInt();
-        $tid = new Tid($id);
-        $this->assertEquals(TidHelper::toString($id), (string)$tid);
-    }
-
-    public function testCompactString()
-    {
-        // Test that the compactString method returns the string without dashes
-        $id = TidHelper::generateInt();
-        $tid = new Tid($id);
-        $this->assertEquals(str_replace('-', '', TidHelper::toString($id)), $tid->compactString());
-    }
-
-    public function testIntegerValue()
-    {
-        // Test that the id property returns the correct integer
-        $id = TidHelper::generateInt();
-        $tid = new Tid($id);
-        $this->assertEquals($id, $tid->id);
-    }
-
-    public function testSerialization()
-    {
-        // Test that a Tid can be serialized and unserialized
-        $id = TidHelper::generateInt();
-        $tid = new Tid($id);
-
-        $serialized = serialize($tid);
-        $unserialized = unserialize($serialized);
-
-        $this->assertEquals($tid->id, $unserialized->id);
-        $this->assertEquals((string)$tid, (string)$unserialized);
-    }
-
-    public function testRoundTrip()
-    {
-        // Test round-trip conversion from Tid to string to Tid
-        $tid1 = new Tid();
-        $string = (string)$tid1;
-        $tid2 = Tid::fromString($string);
-
-        $this->assertEquals($tid1->id, $tid2->id);
-    }
-
-    public function testEquality()
-    {
-        // Test that two Tids with the same ID are equal when converted to strings
-        $id = TidHelper::generateInt();
-        $tid1 = new Tid($id);
-        $tid2 = new Tid($id);
-
-        $this->assertEquals((string)$tid1, (string)$tid2);
-    }
-
-    public function testJsonSerialization()
-    {
-        $id = new Tid();
-        $json = json_encode($id);
-        $this->assertIsString($json);
-        $this->assertEquals($id->id, json_decode($json));
+        $tid = Tid::generate(Tid::VERSION_1);
+        $this->assertEquals('"' . (string)$tid . '"', json_encode($tid));
     }
 }
