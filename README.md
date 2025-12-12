@@ -11,7 +11,7 @@ php-tid is a simple, lightweight library for generating unique, time-ordered, hu
 - **URL-safe**: No special characters that are hard to type or need encoding in URLs
 - **Privacy-conscious**: Can drop optional amounts of timestamp precision to avoid leaking exact creation times
 - **Ergonomic**: Strings can be easily converted from the concise format back into the underlying integer, or vice versa
-- **Variable-length**: Currently all values are 63 bits, meaning that they will fit in the default integer representation of almost any language/environment, but the length is not fixed so future versions may expand that length if needed.
+- **Future-proof**: Currently all values are 63 bits, meaning that they will fit in the default integer representation of almost any language/environment, but the length is not fixed so future versions may expand that length if needed.
 
 ## Why php-tid?
 
@@ -107,7 +107,7 @@ $serialized = serialize($tid);
 $unserialized = unserialize($serialized);
 
 echo $tid === $unserialized; // false (different objects)
-echo $tid->id === $unserialized->id; // true (same ID value)
+echo $tid->value === $unserialized->value; // true (same ID value)
 ```
 
 ### Using with databases
@@ -119,7 +119,7 @@ Tids can be stored in your database as either strings or integers:
 $db->query("INSERT INTO users (id, name) VALUES (?, ?)", [(string)$tid, "John"]);
 
 // Store as an integer (more efficient)
-$db->query("INSERT INTO users (id, name) VALUES (?, ?)", [$tid->id, "John"]);
+$db->query("INSERT INTO users (id, name) VALUES (?, ?)", [$tid->value, "John"]);
 ```
 
 ### Deterministic generation

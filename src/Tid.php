@@ -52,7 +52,7 @@ class Tid implements Stringable, JsonSerializable
      * Configuration for each supported version of Tid, mapping version numbers to arrays of [dropped bits, entropy bits].
      */
     public const VERSION_CONFIGS = [
-        0 => [64, 59],
+        0 => [null, 59],
         1 => [0, 14],
         2 => [8, 22],
         3 => [16, 30],
@@ -106,13 +106,14 @@ class Tid implements Stringable, JsonSerializable
 
     public static function hmacGenerate(string $source, string $secret): Tid
     {
+        // hmac to get a deterministic but unpredictable hash and truncate to 64 bits
         $hash = hash_hmac('sha256', $source, $secret);
         $int = (int) base_convert(substr($hash, 0, 16), 16, 10);
-        // make room for 4 version bits and top 2 msb values of 01
+        // shift 64-bit value right 4 to get 58 random bits
         $int = $int >> 6;
-        // lsb is 00 for version 0
+        // 4 lsb are 0000 for version 0
         $int = $int << 4;
-        // make 63rd bi 1
+        // make 63rd bit 1
         $int = $int | 1 << 62;
         // return finished Tid
         return new Tid($int);
