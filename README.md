@@ -37,8 +37,9 @@ use Joby\Smol\UID\UID;
 
 // Generate a new UID
 // Default is version 0, which is fully random
-// Version 1 keeps the full timestamp, and versions 2-4 trim increasing amounts of precision from the timestamp
-$uid = UID::generate(UID::VERSION_1);
+// Version 1.1 keeps the full timestamp
+// Versions 1.2-1.4 trim increasing amounts of precision from the timestamp
+$uid = UID::generate(UID::VERSION_1_1);
 ```
 
 ### UID versions
