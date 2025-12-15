@@ -1,10 +1,10 @@
-# php-tid
+# smolUID
 
 A simple and lightweight time-ordered random ID library designed for human-scale applications.
 
-## What is php-tid?
+## What is smolUID?
 
-php-tid is a simple, lightweight library for generating unique, time-ordered, human-readable IDs. Unlike full UUIDs or simple auto-incrementing database IDs, Tids are:
+smolUID is a simple, lightweight library for generating unique, time-ordered, human-readable IDs. Unlike full UUIDs or simple auto-incrementing database IDs, UIDs are:
 
 - **Human-readable**: String representations as base 36 integers for more compact format for URLs, markup, etc.
 - **Time-ordered**: Can be represented as integers or strings, and both are naturally sortable by rough creation time
@@ -13,7 +13,7 @@ php-tid is a simple, lightweight library for generating unique, time-ordered, hu
 - **Ergonomic**: Strings can be easily converted from the concise format back into the underlying integer, or vice versa
 - **Future-proof**: Currently all values are 63 bits, meaning that they will fit in the default integer representation of almost any language/environment, but the length is not fixed so future versions may expand that length if needed.
 
-## Why php-tid?
+## Why smolUID?
 
 Not every project needs guaranteed globally unique IDs or distributed systems. For many smaller applications, simpler solutions are often better:
 
@@ -30,18 +30,18 @@ composer require joby/tid
 
 ## Basic Usage
 
-### Creating a new Tid
+### Creating a new UID
 
 ```php
-use Joby\Tid\Tid;
+use Joby\Smol\UID\UID;
 
-// Generate a new Tid
+// Generate a new UID
 // Default is version 0, which is fully random
 // Version 1 keeps the full timestamp, and versions 2-4 trim increasing amounts of precision from the timestamp
-$tid = Tid::generate(Tid::VERSION_1);
+$tid = UID::generate(UID::VERSION_1);
 ```
 
-### Tid versions
+### UID versions
 
 | Version | Time resolution    | Random bits | String length | Availability     |
 | ------- | ------------------ | ----------- | ------------- | ---------------- |
@@ -52,27 +52,27 @@ $tid = Tid::generate(Tid::VERSION_1);
 | 1.3     | ~3 days            | 29          | 10            | ~1.4 billion/day |
 | 1.4     | ~12 days           | 31          | 10            | ~1.4 billion/day |
 
-### Tid deterministically derived from string
+### UID deterministically derived from string
 
 ```php
-use Joby\Tid\Tid;
+use Joby\Smol\UID\UID;
 
-// Create a Tid from a string
-$tid = Tid::fromString("abcdefgh");
+// Create a UID from a string
+$tid = UID::fromString("abcdefgh");
 ```
 
-### Getting Tid parts
+### Getting UID parts
 
 ```php
-use Joby\Tid\Tid;
+use Joby\Smol\UID\UID;
 
-$tid = new Tid();
+$tid = new UID();
 
-// Get the approximate timestamp when this Tid was created
-// This returns the lower bound of when this Tid was created
+// Get the approximate timestamp when this UID was created
+// This returns the lower bound of when this UID was created
 $timestamp = $tid->time();
 
-// Get the entropy bits (random portion) of the Tid
+// Get the entropy bits (random portion) of the UID
 $entropy = $tid->random();
 ```
 
@@ -81,28 +81,28 @@ $entropy = $tid->random();
 ### Using the underlying integer
 
 ```php
-use Joby\Tid\Tid;
+use Joby\Smol\UID\UID;
 
-// Create a Tid
-$tid = new Tid();
+// Create a UID
+$tid = new UID();
 
 // Get the underlying integer
 $int = $tid->value;
 
-// Convert back to a Tid
-$sameTid = new Tid($int);
+// Convert back to a UID
+$sameUID = new UID($int);
 // or
-$sameTid = Tid::fromInt($int);
+$sameUID = UID::fromInt($int);
 ```
 
 ### Serialization
 
-Tid objects can be serialized and unserialized:
+UID objects can be serialized and unserialized:
 
 ```php
-use Joby\Tid\Tid;
+use Joby\Smol\UID\UID;
 
-$tid = new Tid();
+$tid = new UID();
 $serialized = serialize($tid);
 $unserialized = unserialize($serialized);
 
@@ -112,7 +112,7 @@ echo $tid->value === $unserialized->value; // true (same ID value)
 
 ### Using with databases
 
-Tids can be stored in your database as either strings or integers:
+UIDs can be stored in your database as either strings or integers:
 
 ```php
 // Store as a string (more readable)
@@ -124,18 +124,18 @@ $db->query("INSERT INTO users (id, name) VALUES (?, ?)", [$tid->value, "John"]);
 
 ### Deterministic generation
 
-Tids can also be generated deterministically, if you need to use them in a manner similar to a hash. In this case they are produced as version 0 Tids with no time data, and their random data is produced by truncating a sha256 hmac hash of the provided string.
+UIDs can also be generated deterministically, if you need to use them in a manner similar to a hash. In this case they are produced as version 0 UIDs with no time data, and their random data is produced by truncating a sha256 hmac hash of the provided string.
 
 ```php
-use Joby\Tid\Tid;
+use Joby\Smol\UID\UID;
 
 // generate from a string
-$tid = Tid::hashGenerate('some value to generate from', 'secret key');
+$tid = UID::hashGenerate('some value to generate from', 'secret key');
 ```
 
 ## How It Works
 
-Each Tid consists of a single integer value with three parts (starting with the least significant bit):
+Each UID consists of a single integer value with three parts (starting with the least significant bit):
 
 1. 4-bit version identifier, from which the other two parts' lengths are determined
 2. 0 or more bits of random data

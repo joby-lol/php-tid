@@ -1,12 +1,12 @@
 <?php
 
 /**
- * Tid Time-ordered IDs: https://github.com/joby-lol/php-tid
+ * smolUID: https://github.com/joby-lol/smol-uid
  * (c) 2025 Joby Elliott code@joby.lol
  * MIT License https://opensource.org/licenses/MIT
  */
 
-namespace Joby\Tid;
+namespace Joby\Smol\UID;
 
 use InvalidArgumentException;
 use JsonSerializable;
@@ -15,7 +15,7 @@ use Stringable;
 /**
  * Lightweight time-ordered ID class that is an integer under the hood but is stringable for more human-readable output. String representations will be 10 characters long for years to come, but will grow as the ID integers increase in size. The IDs are sortable by generation time, in both integer and string forms, and the resolution of that sorting is adjustable by picking versions that trim different numbers of bits from the timestamp in favor of more random bits.
  */
-class Tid implements Stringable, JsonSerializable
+class UID implements Stringable, JsonSerializable
 {
 
     /**
@@ -49,7 +49,7 @@ class Tid implements Stringable, JsonSerializable
     public const VERSION_1_4 = 5;
 
     /**
-     * Configuration for each supported version of Tid, mapping version numbers to arrays of [dropped bits, entropy bits].
+     * Configuration for each supported version of UID, mapping version numbers to arrays of [dropped bits, entropy bits].
      */
     public const VERSION_CONFIGS = [
         0 => [null, 59],
@@ -66,43 +66,43 @@ class Tid implements Stringable, JsonSerializable
     public readonly int $value;
 
     /**
-     * Create a Tid object from its string representation.
+     * Create a UID object from its string representation.
      * 
-     * @throws InvalidArgumentException if the string is not a valid Tid.
+     * @throws InvalidArgumentException if the string is not a valid UID.
      */
-    public static function fromString(string $tid): Tid
+    public static function fromString(string $tid): UID
     {
         $int = base_convert(strtolower($tid), 36, 10);
-        return new Tid(intval($int));
+        return new UID(intval($int));
     }
 
     /**
-     * Create a Tid object from its integer representation.
+     * Create a UID object from its integer representation.
      * 
      * @throws InvalidArgumentException if the integer is negative.
      */
-    public static function fromInt(int $tid): Tid
+    public static function fromInt(int $tid): UID
     {
-        return new Tid($tid);
+        return new UID($tid);
     }
 
     /**
-     * Generate a new Tid of the specified version.
+     * Generate a new UID of the specified version.
      * 
      * @throws InvalidArgumentException if the version is unsupported.
      */
-    public static function generate(int $version = self::VERSION_0): Tid
+    public static function generate(int $version = self::VERSION_0): UID
     {
         // special case for fully-random ones
         if ($version == self::VERSION_0) {
             $int = random_int(0, (1 << 58) - 1) << 4;
             $int = $int | self::VERSION_0;
             $int = $int | (1 << 62);
-            return new Tid($int);
+            return new UID($int);
         }
         // normal generation
         if (!array_key_exists($version, self::VERSION_CONFIGS)) {
-            throw new InvalidArgumentException('Unsupported Tid version');
+            throw new InvalidArgumentException('Unsupported UID version');
         }
         $droppedBits = self::VERSION_CONFIGS[$version][0];
         $entropyBits = self::VERSION_CONFIGS[$version][1];
@@ -115,14 +115,14 @@ class Tid implements Stringable, JsonSerializable
         // add version in the lowest 4 bits
         $int = $int << 4;
         $int = $int | $version;
-        // return finished Tid
-        return new Tid($int);
+        // return finished UID
+        return new UID($int);
     }
 
     /**
-     * Generate a Tid deterministically from a source string and secret, using HMAC to produce a pseudo-random but deterministic value.
+     * Generate a UID deterministically from a source string and secret, using HMAC to produce a pseudo-random but deterministic value.
      */
-    public static function hmacGenerate(string $source, string $secret): Tid
+    public static function hmacGenerate(string $source, string $secret): UID
     {
         // hmac to get a deterministic but unpredictable hash and truncate to 64 bits
         $hash = hash_hmac('sha256', $source, $secret);
@@ -133,23 +133,23 @@ class Tid implements Stringable, JsonSerializable
         $int = $int << 4;
         // make 63rd bit 1
         $int = $int | 1 << 62;
-        // return finished Tid
-        return new Tid($int);
+        // return finished UID
+        return new UID($int);
     }
 
     /**
-     * Construct a Tid object from an integer representation.
+     * Construct a UID object from an integer representation.
      * 
-     * @throws InvalidArgumentException if the integer is not a valid Tid
+     * @throws InvalidArgumentException if the integer is not a valid UID
      */
     public function __construct(int $id)
     {
         if ($id < 0) {
-            throw new InvalidArgumentException('Tid integer must not be negative');
+            throw new InvalidArgumentException('UID integer must not be negative');
         }
         $this->value = $id;
         if (!array_key_exists($this->version(), self::VERSION_CONFIGS)) {
-            throw new InvalidArgumentException('Unsupported Tid version');
+            throw new InvalidArgumentException('Unsupported UID version');
         }
     }
 
@@ -162,7 +162,7 @@ class Tid implements Stringable, JsonSerializable
     }
 
     /**
-     * Return just the timestamp portion of the Tid, at the low end of the window of the time the Tid was generated in.
+     * Return just the timestamp portion of the UID, at the low end of the window of the time the UID was generated in.
      */
     public function time(): int
     {
@@ -180,7 +180,7 @@ class Tid implements Stringable, JsonSerializable
     }
 
     /**
-     * Return the random portion of the Tid, which is the low bits after the timestamp but before the version.
+     * Return the random portion of the UID, which is the low bits after the timestamp but before the version.
      */
     public function random(): int
     {
@@ -196,7 +196,7 @@ class Tid implements Stringable, JsonSerializable
     }
 
     /**
-     * Get the number of random bits for this Tid version.
+     * Get the number of random bits for this UID version.
      */
     public function entropyBits(): int
     {
@@ -204,7 +204,7 @@ class Tid implements Stringable, JsonSerializable
     }
 
     /**
-     * Get the string representation of the Tid, which is a base36 encoding of the integer value.
+     * Get the string representation of the UID, which is a base36 encoding of the integer value.
      */
     public function __toString(): string
     {
@@ -212,7 +212,7 @@ class Tid implements Stringable, JsonSerializable
     }
 
     /**
-     * Tids serialize to JSON as their string representation.
+     * UIDs serialize to JSON as their string representation.
      */
     public function jsonSerialize(): string
     {

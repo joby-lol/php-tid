@@ -1,16 +1,16 @@
 {
-  "name": "joby/tid",
-  "description": "A lightweight time-ordered random ID system designed for human-scale applications.",
+  "name": "joby/smol-uid",
+  "description": "A simple and lightweight time-ordered random ID library designed for human-scale applications.",
   "type": "library",
   "license": "MIT",
   "autoload": {
     "psr-4": {
-      "Joby\\Tid\\": "src/"
+      "Joby\\Smol\\UID\\": "src/"
     }
   },
   "autoload-dev": {
     "psr-4": {
-      "Joby\\Tid\\": "tests/"
+      "Joby\\Smol\\UID\\": "tests/"
     }
   },
   "authors": [
