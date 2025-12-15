@@ -25,7 +25,7 @@ Not every project needs guaranteed globally unique IDs or distributed systems. F
 ## Installation
 
 ```bash
-composer require joby/tid
+composer require joby/smol-uid
 ```
 
 ## Basic Usage
@@ -38,7 +38,7 @@ use Joby\Smol\UID\UID;
 // Generate a new UID
 // Default is version 0, which is fully random
 // Version 1 keeps the full timestamp, and versions 2-4 trim increasing amounts of precision from the timestamp
-$tid = UID::generate(UID::VERSION_1);
+$uid = UID::generate(UID::VERSION_1);
 ```
 
 ### UID versions
@@ -58,7 +58,7 @@ $tid = UID::generate(UID::VERSION_1);
 use Joby\Smol\UID\UID;
 
 // Create a UID from a string
-$tid = UID::fromString("abcdefgh");
+$uid = UID::fromString("abcdefgh");
 ```
 
 ### Getting UID parts
@@ -66,14 +66,14 @@ $tid = UID::fromString("abcdefgh");
 ```php
 use Joby\Smol\UID\UID;
 
-$tid = new UID();
+$uid = new UID();
 
 // Get the approximate timestamp when this UID was created
 // This returns the lower bound of when this UID was created
-$timestamp = $tid->time();
+$timestamp = $uid->time();
 
 // Get the entropy bits (random portion) of the UID
-$entropy = $tid->random();
+$entropy = $uid->random();
 ```
 
 ## Advanced Usage
@@ -84,10 +84,10 @@ $entropy = $tid->random();
 use Joby\Smol\UID\UID;
 
 // Create a UID
-$tid = new UID();
+$uid = new UID();
 
 // Get the underlying integer
-$int = $tid->value;
+$int = $uid->value;
 
 // Convert back to a UID
 $sameUID = new UID($int);
@@ -102,12 +102,12 @@ UID objects can be serialized and unserialized:
 ```php
 use Joby\Smol\UID\UID;
 
-$tid = new UID();
-$serialized = serialize($tid);
+$uid = new UID();
+$serialized = serialize($uid);
 $unserialized = unserialize($serialized);
 
-echo $tid === $unserialized; // false (different objects)
-echo $tid->value === $unserialized->value; // true (same ID value)
+echo $uid === $unserialized; // false (different objects)
+echo $uid->value === $unserialized->value; // true (same ID value)
 ```
 
 ### Using with databases
@@ -116,10 +116,10 @@ UIDs can be stored in your database as either strings or integers:
 
 ```php
 // Store as a string (more readable)
-$db->query("INSERT INTO users (id, name) VALUES (?, ?)", [(string)$tid, "John"]);
+$db->query("INSERT INTO users (id, name) VALUES (?, ?)", [(string)$uid, "John"]);
 
 // Store as an integer (more efficient)
-$db->query("INSERT INTO users (id, name) VALUES (?, ?)", [$tid->value, "John"]);
+$db->query("INSERT INTO users (id, name) VALUES (?, ?)", [$uid->value, "John"]);
 ```
 
 ### Deterministic generation
@@ -130,7 +130,7 @@ UIDs can also be generated deterministically, if you need to use them in a manne
 use Joby\Smol\UID\UID;
 
 // generate from a string
-$tid = UID::hashGenerate('some value to generate from', 'secret key');
+$uid = UID::hashGenerate('some value to generate from', 'secret key');
 ```
 
 ## How It Works

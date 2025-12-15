@@ -15,76 +15,76 @@ class UIDTest extends TestCase
 {
     public function test_version_0()
     {
-        $tid = UID::generate(UID::VERSION_0);
-        $this->assertEquals(UID::VERSION_0, $tid->version());
-        $this->assertEquals($tid, UID::fromString((string)$tid));
-        $this->assertEquals($tid, UID::fromInt($tid->value));
-        $this->assertEquals(0, $tid->time());
-        $this->assertEquals(59, $tid->entropyBits());
-        $this->assertEquals($tid->value >> 4 & ((1 << 59) - 1), $tid->random());
+        $uid = UID::generate(UID::VERSION_0);
+        $this->assertEquals(UID::VERSION_0, $uid->version());
+        $this->assertEquals($uid, UID::fromString((string)$uid));
+        $this->assertEquals($uid, UID::fromInt($uid->value));
+        $this->assertEquals(0, $uid->time());
+        $this->assertEquals(59, $uid->entropyBits());
+        $this->assertEquals($uid->value >> 4 & ((1 << 59) - 1), $uid->random());
     }
 
     public function test_version_1_0()
     {
-        $tid = UID::generate(UID::VERSION_1_0);
-        $this->assertEquals(UID::VERSION_1_0, $tid->version());
-        $this->assertEquals($tid, UID::fromString((string)$tid));
-        $this->assertEquals($tid, UID::fromInt($tid->value));
-        $this->assertGreaterThanOrEqual(time(), $tid->time());
-        $this->assertEquals(14, $tid->entropyBits());
-        $this->assertEquals($tid->value >> 4 & ((1 << 14) - 1), $tid->random());
+        $uid = UID::generate(UID::VERSION_1_0);
+        $this->assertEquals(UID::VERSION_1_0, $uid->version());
+        $this->assertEquals($uid, UID::fromString((string)$uid));
+        $this->assertEquals($uid, UID::fromInt($uid->value));
+        $this->assertGreaterThanOrEqual(time(), $uid->time());
+        $this->assertEquals(14, $uid->entropyBits());
+        $this->assertEquals($uid->value >> 4 & ((1 << 14) - 1), $uid->random());
     }
 
     public function test_version_1_1()
     {
-        $tid = UID::generate(UID::VERSION_1_1);
-        $this->assertEquals(UID::VERSION_1_1, $tid->version());
-        $this->assertEquals($tid, UID::fromString((string)$tid));
-        $this->assertEquals($tid, UID::fromInt($tid->value));
-        $this->assertGreaterThanOrEqual(intdiv(time(), 256), $tid->time());
-        $this->assertEquals(22, $tid->entropyBits());
-        $this->assertEquals($tid->value >> 4 & ((1 << 22) - 1), $tid->random());
+        $uid = UID::generate(UID::VERSION_1_1);
+        $this->assertEquals(UID::VERSION_1_1, $uid->version());
+        $this->assertEquals($uid, UID::fromString((string)$uid));
+        $this->assertEquals($uid, UID::fromInt($uid->value));
+        $this->assertGreaterThanOrEqual(intdiv(time(), 256), $uid->time());
+        $this->assertEquals(22, $uid->entropyBits());
+        $this->assertEquals($uid->value >> 4 & ((1 << 22) - 1), $uid->random());
     }
 
     public function test_version_1_2()
     {
-        $tid = UID::generate(UID::VERSION_1_2);
-        $this->assertEquals(UID::VERSION_1_2, $tid->version());
-        $this->assertEquals($tid, UID::fromString((string)$tid));
-        $this->assertEquals($tid, UID::fromInt($tid->value));
-        $this->assertGreaterThanOrEqual(intdiv(time(), 65536), $tid->time());
-        $this->assertEquals(30, $tid->entropyBits());
-        $this->assertEquals($tid->value >> 4 & ((1 << 30) - 1), $tid->random());
+        $uid = UID::generate(UID::VERSION_1_2);
+        $this->assertEquals(UID::VERSION_1_2, $uid->version());
+        $this->assertEquals($uid, UID::fromString((string)$uid));
+        $this->assertEquals($uid, UID::fromInt($uid->value));
+        $this->assertGreaterThanOrEqual(intdiv(time(), 65536), $uid->time());
+        $this->assertEquals(30, $uid->entropyBits());
+        $this->assertEquals($uid->value >> 4 & ((1 << 30) - 1), $uid->random());
     }
 
     public function test_version_1_3()
     {
-        $tid = UID::generate(UID::VERSION_1_3);
-        $this->assertEquals(UID::VERSION_1_3, $tid->version());
-        $this->assertEquals($tid, UID::fromString((string)$tid));
-        $this->assertEquals($tid, UID::fromInt($tid->value));
-        $this->assertGreaterThanOrEqual(intdiv(time(), 262144), $tid->time());
-        $this->assertEquals(32, $tid->entropyBits());
-        $this->assertEquals($tid->value >> 4 & ((1 << 32) - 1), $tid->random());
+        $uid = UID::generate(UID::VERSION_1_3);
+        $this->assertEquals(UID::VERSION_1_3, $uid->version());
+        $this->assertEquals($uid, UID::fromString((string)$uid));
+        $this->assertEquals($uid, UID::fromInt($uid->value));
+        $this->assertGreaterThanOrEqual(intdiv(time(), 262144), $uid->time());
+        $this->assertEquals(32, $uid->entropyBits());
+        $this->assertEquals($uid->value >> 4 & ((1 << 32) - 1), $uid->random());
     }
 
     public function test_version_1_4()
     {
-        $tid = UID::generate(UID::VERSION_1_4);
-        $this->assertEquals(UID::VERSION_1_4, $tid->version());
-        $this->assertEquals($tid, UID::fromString((string)$tid));
-        $this->assertEquals($tid, UID::fromInt($tid->value));
-        $this->assertGreaterThanOrEqual(intdiv(time(), 1048576), $tid->time());
-        $this->assertEquals(34, $tid->entropyBits());
-        $this->assertEquals($tid->value >> 4 & ((1 << 34) - 1), $tid->random());
+        $uid = UID::generate(UID::VERSION_1_4);
+        $this->assertEquals(UID::VERSION_1_4, $uid->version());
+        $this->assertEquals($uid, UID::fromString((string)$uid));
+        $this->assertEquals($uid, UID::fromInt($uid->value));
+        $this->assertGreaterThanOrEqual(intdiv(time(), 1048576), $uid->time());
+        $this->assertEquals(34, $uid->entropyBits());
+        $this->assertEquals($uid->value >> 4 & ((1 << 34) - 1), $uid->random());
     }
 
     public function test_hmac_generation()
     {
-        $tid = UID::hmacGenerate('foo', 'bar');
-        $this->assertEquals(UID::VERSION_0, $tid->version());
-        $this->assertEquals(4980502661450870528, $tid->value);
-        $this->assertEquals('11u80ugb7uj28', (string)$tid);
+        $uid = UID::hmacGenerate('foo', 'bar');
+        $this->assertEquals(UID::VERSION_0, $uid->version());
+        $this->assertEquals(4980502661450870528, $uid->value);
+        $this->assertEquals('11u80ugb7uj28', (string)$uid);
     }
 
     public function test_invalid_version_generation()
@@ -108,7 +108,7 @@ class UIDTest extends TestCase
 
     public function test_json_serialization()
     {
-        $tid = UID::generate(UID::VERSION_1_0);
-        $this->assertEquals('"' . (string)$tid . '"', json_encode($tid));
+        $uid = UID::generate(UID::VERSION_1_0);
+        $this->assertEquals('"' . (string)$uid . '"', json_encode($uid));
     }
 }

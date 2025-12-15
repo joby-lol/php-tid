@@ -70,9 +70,9 @@ class UID implements Stringable, JsonSerializable
      * 
      * @throws InvalidArgumentException if the string is not a valid UID.
      */
-    public static function fromString(string $tid): UID
+    public static function fromString(string $uid): UID
     {
-        $int = base_convert(strtolower($tid), 36, 10);
+        $int = base_convert(strtolower($uid), 36, 10);
         return new UID(intval($int));
     }
 
@@ -81,9 +81,9 @@ class UID implements Stringable, JsonSerializable
      * 
      * @throws InvalidArgumentException if the integer is negative.
      */
-    public static function fromInt(int $tid): UID
+    public static function fromInt(int $uid): UID
     {
-        return new UID($tid);
+        return new UID($uid);
     }
 
     /**
