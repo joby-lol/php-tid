@@ -97,7 +97,7 @@ $uid2 = UID::fromString((string) $uid1);
 // They have the same integer value, so == works
 $uid1 == $uid2; // true
 
-// The library also ensures they are th same object, so === works too
+// The library also ensures they are the same object, so === works too
 $uid1 === $uid2; // true
 ```
 
@@ -148,6 +148,12 @@ $uid = UID::hashGenerate('some value to generate from');
 // makes guessing underlying values much harder
 $uid = UID::hmacGenerate('some value to generate from', 'secret key');
 ```
+
+### Garbage collection
+
+In long-running scripts that work with large numbers of different UIDs in a single run (think at least hundreds of thousands, if not millions), you may want to garbage-collect the internal cache periodically. This will clear out weak cache references to objects that have been garbage-collected by PHP.
+
+Running garbage collection is as simple as calling `UID::garbageCollect()`
 
 ## How It Works
 
