@@ -17,8 +17,8 @@ class UIDTest extends TestCase
     {
         $uid = UID::generate(UID::VERSION_0);
         $this->assertEquals(UID::VERSION_0, $uid->version());
-        $this->assertEquals($uid, UID::fromString((string)$uid));
-        $this->assertEquals($uid, UID::fromInt($uid->value));
+        $this->assertSame($uid, UID::fromString((string) $uid));
+        $this->assertSame($uid, UID::fromInt($uid->value));
         $this->assertEquals(0, $uid->time());
         $this->assertEquals(59, $uid->entropyBits());
         $this->assertEquals($uid->value >> 4 & ((1 << 59) - 1), $uid->random());
@@ -28,8 +28,8 @@ class UIDTest extends TestCase
     {
         $uid = UID::generate(UID::VERSION_1_0);
         $this->assertEquals(UID::VERSION_1_0, $uid->version());
-        $this->assertEquals($uid, UID::fromString((string)$uid));
-        $this->assertEquals($uid, UID::fromInt($uid->value));
+        $this->assertSame($uid, UID::fromString((string) $uid));
+        $this->assertSame($uid, UID::fromInt($uid->value));
         $this->assertGreaterThanOrEqual(time(), $uid->time());
         $this->assertEquals(14, $uid->entropyBits());
         $this->assertEquals($uid->value >> 4 & ((1 << 14) - 1), $uid->random());
@@ -39,8 +39,8 @@ class UIDTest extends TestCase
     {
         $uid = UID::generate(UID::VERSION_1_1);
         $this->assertEquals(UID::VERSION_1_1, $uid->version());
-        $this->assertEquals($uid, UID::fromString((string)$uid));
-        $this->assertEquals($uid, UID::fromInt($uid->value));
+        $this->assertSame($uid, UID::fromString((string) $uid));
+        $this->assertSame($uid, UID::fromInt($uid->value));
         $this->assertGreaterThanOrEqual(intdiv(time(), 256), $uid->time());
         $this->assertEquals(22, $uid->entropyBits());
         $this->assertEquals($uid->value >> 4 & ((1 << 22) - 1), $uid->random());
@@ -50,8 +50,8 @@ class UIDTest extends TestCase
     {
         $uid = UID::generate(UID::VERSION_1_2);
         $this->assertEquals(UID::VERSION_1_2, $uid->version());
-        $this->assertEquals($uid, UID::fromString((string)$uid));
-        $this->assertEquals($uid, UID::fromInt($uid->value));
+        $this->assertSame($uid, UID::fromString((string) $uid));
+        $this->assertSame($uid, UID::fromInt($uid->value));
         $this->assertGreaterThanOrEqual(intdiv(time(), 65536), $uid->time());
         $this->assertEquals(30, $uid->entropyBits());
         $this->assertEquals($uid->value >> 4 & ((1 << 30) - 1), $uid->random());
@@ -61,8 +61,8 @@ class UIDTest extends TestCase
     {
         $uid = UID::generate(UID::VERSION_1_3);
         $this->assertEquals(UID::VERSION_1_3, $uid->version());
-        $this->assertEquals($uid, UID::fromString((string)$uid));
-        $this->assertEquals($uid, UID::fromInt($uid->value));
+        $this->assertSame($uid, UID::fromString((string) $uid));
+        $this->assertSame($uid, UID::fromInt($uid->value));
         $this->assertGreaterThanOrEqual(intdiv(time(), 262144), $uid->time());
         $this->assertEquals(32, $uid->entropyBits());
         $this->assertEquals($uid->value >> 4 & ((1 << 32) - 1), $uid->random());
@@ -72,8 +72,8 @@ class UIDTest extends TestCase
     {
         $uid = UID::generate(UID::VERSION_1_4);
         $this->assertEquals(UID::VERSION_1_4, $uid->version());
-        $this->assertEquals($uid, UID::fromString((string)$uid));
-        $this->assertEquals($uid, UID::fromInt($uid->value));
+        $this->assertSame($uid, UID::fromString((string) $uid));
+        $this->assertSame($uid, UID::fromInt($uid->value));
         $this->assertGreaterThanOrEqual(intdiv(time(), 1048576), $uid->time());
         $this->assertEquals(34, $uid->entropyBits());
         $this->assertEquals($uid->value >> 4 & ((1 << 34) - 1), $uid->random());
@@ -101,22 +101,94 @@ class UIDTest extends TestCase
         UID::generate(99);
     }
 
-    public function test_invalid_version_from_constructor()
+    public function test_invalid_version_from_integer()
     {
         // NOTE: if versions all the way through 15 are supported in the future, this test will need to be updated/removed
         $this->expectException(InvalidArgumentException::class);
-        new UID(15);
+        UID::fromInt(15);
     }
 
     public function test_constructor_with_negative_integer()
     {
         $this->expectException(InvalidArgumentException::class);
-        new UID(-1);
+        UID::fromInt(-1);
     }
 
     public function test_json_serialization()
     {
         $uid = UID::generate(UID::VERSION_1_0);
         $this->assertEquals('"' . (string)$uid . '"', json_encode($uid));
+    }
+
+    /**
+     * Verify that identity mapping ensures the same integer always results in 
+     * the exact same object instance (strict equality).
+     */
+    public function test_identity_mapping()
+    {
+        $int = 1234567890;
+        $uid1 = UID::fromInt($int);
+        $uid2 = UID::fromInt($int);
+        $uid3 = UID::fromString((string) $uid1);
+
+        // Test for strict instance equality
+        $this->assertSame($uid1, $uid2, 'Objects from identical integers must be the same instance.');
+        $this->assertSame($uid1, $uid3, 'Objects reconstituted from strings must be the same instance.');
+
+        // Verify generators route through the identity map
+        $gen1 = UID::hashGenerate('identity-test');
+        $gen2 = UID::hashGenerate('identity-test');
+        $this->assertSame($gen1, $gen2, 'Deterministic generators must respect the identity map.');
+    }
+
+    /**
+     * Verify that manual garbage collection clears stale WeakReferences 
+     * from the internal cache once strong references are released.
+     */
+    public function test_manual_garbage_collection()
+    {
+        // Ensure any prior test artifacts are cleared
+        gc_collect_cycles();
+        UID::garbageCollect();
+
+        // 1. Create a UID and store it
+        $uid = UID::fromInt(1234567890);
+
+        // Helper to inspect protected static $cache size via reflection
+        $getCacheSize = function () {
+            $ref = new \ReflectionClass(UID::class);
+            return count($ref->getStaticPropertyValue('cache'));
+        };
+
+        $this->assertEquals(1, $getCacheSize(), 'Cache should contain one item.');
+
+        // 2. Clear the only strong reference
+        unset($uid);
+
+        // 3. Force PHP's internal cycle collector to ensure the object is destroyed
+        gc_collect_cycles();
+
+        // 4. Run the library's manual collection. 
+        // Before this, the key '88888' still exists in the array, but its value is a dead WeakReference.
+        UID::garbageCollect();
+
+        $this->assertEquals(0, $getCacheSize(), 'Cache should be empty after manual garbage collection.');
+    }
+
+    /**
+     * Ensure that the garbage collector does not remove objects that 
+     * are still in use elsewhere in the application.
+     */
+    public function test_garbage_collector_persists_active_objects()
+    {
+        $uid = UID::fromInt(77777);
+
+        UID::garbageCollect();
+
+        $ref = new \ReflectionClass(UID::class);
+        $cache = $ref->getStaticPropertyValue('cache');
+
+        $this->assertArrayHasKey(77777, $cache, 'Active UID must not be removed from cache.');
+        $this->assertSame($uid, $cache[77777]->get(), 'Cached reference must still point to the active object.');
     }
 }

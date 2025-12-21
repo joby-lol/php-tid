@@ -11,12 +11,16 @@ namespace Joby\Smol\UID;
 use InvalidArgumentException;
 use JsonSerializable;
 use Stringable;
+use WeakReference;
 
 /**
  * Lightweight time-ordered ID class that is an integer under the hood but is stringable for more human-readable output. String representations will be 10 characters long for years to come, but will grow as the ID integers increase in size. The IDs are sortable by generation time, in both integer and string forms, and the resolution of that sorting is adjustable by picking versions that trim different numbers of bits from the timestamp in favor of more random bits.
  */
 class UID implements Stringable, JsonSerializable
 {
+
+    /** @var array<int,WeakReference<UID>> $cache cache of weak references */
+    protected static array $cache = [];
 
     /**
      * Version 0, reserved for entirely random IDs with no time information in them at all. Random IDs are somewhat different, in that they will always occupy the full 63 bits, their most significant bit will always be one (to stabilize their string length), leaving 58 entirely random bits.
@@ -73,7 +77,7 @@ class UID implements Stringable, JsonSerializable
     public static function fromString(string $uid): UID
     {
         $int = base_convert(strtolower($uid), 36, 10);
-        return new UID(intval($int));
+        return static::fromInt(intval($int));
     }
 
     /**
@@ -83,7 +87,26 @@ class UID implements Stringable, JsonSerializable
      */
     public static function fromInt(int $uid): UID
     {
-        return new UID($uid);
+        // check for existing object in weak map
+        if (isset(static::$cache[$uid])) {
+            $object = static::$cache[$uid]->get();
+            if ($object !== null) {
+                return $object;
+            }
+        }
+        // create new object and store weak reference
+        $object = new UID($uid);
+        static::$cache[$uid] = WeakReference::create($object);
+        return $object;
+    }
+
+    public static function garbageCollect(): void
+    {
+        foreach (static::$cache as $key => $ref) {
+            if ($ref->get() === null) {
+                unset(static::$cache[$key]);
+            }
+        }
     }
 
     /**
@@ -98,7 +121,7 @@ class UID implements Stringable, JsonSerializable
             $int = random_int(0, (1 << 58) - 1) << 4;
             $int = $int | self::VERSION_0;
             $int = $int | (1 << 62);
-            return new UID($int);
+            return UID::fromInt($int);
         }
         // normal generation
         if (!array_key_exists($version, self::VERSION_CONFIGS)) {
@@ -116,7 +139,7 @@ class UID implements Stringable, JsonSerializable
         $int = $int << 4;
         $int = $int | $version;
         // return finished UID
-        return new UID($int);
+        return UID::fromInt($int);
     }
 
     /**
@@ -134,7 +157,7 @@ class UID implements Stringable, JsonSerializable
         // make 63rd bit 1
         $int = $int | 1 << 62;
         // return finished UID
-        return new UID($int);
+        return UID::fromInt($int);
     }
 
     /**
@@ -152,7 +175,7 @@ class UID implements Stringable, JsonSerializable
         // make 63rd bit 1
         $int = $int | 1 << 62;
         // return finished UID
-        return new UID($int);
+        return UID::fromInt($int);
     }
 
     /**
@@ -160,7 +183,7 @@ class UID implements Stringable, JsonSerializable
      * 
      * @throws InvalidArgumentException if the integer is not a valid UID
      */
-    public function __construct(int $id)
+    protected function __construct(int $id)
     {
         if ($id < 0) {
             throw new InvalidArgumentException('UID integer must not be negative');

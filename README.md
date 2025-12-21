@@ -76,13 +76,29 @@ $sameUID = UID::fromString($string);
 use Joby\Smol\UID\UID;
 
 // Create a UID
-$uid = new UID();
+$uid = UID::generate();
 
 // Get the underlying integer
 $int = $uid->value;
 
 // Convert back to a UID
 $sameUID = UID::fromInt($int);
+```
+
+### Checking equality
+
+```php
+use Joby\Smol\UID\UID;
+
+// Create a UID and a copy from its string
+$uid1 = UID::generate();
+$uid2 = UID::fromString((string) $uid1);
+
+// They have the same integer value, so == works
+$uid1 == $uid2; // true
+
+// The library also ensures they are th same object, so === works too
+$uid1 === $uid2; // true
 ```
 
 ## Advanced Usage
@@ -92,7 +108,7 @@ $sameUID = UID::fromInt($int);
 ```php
 use Joby\Smol\UID\UID;
 
-$uid = new UID();
+$uid = UID::generate();
 
 // Get the version bits
 $version = $uid->version();
