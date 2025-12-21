@@ -87,6 +87,14 @@ class UIDTest extends TestCase
         $this->assertEquals('11u80ugb7uj28', (string)$uid);
     }
 
+    public function test_hash_generation()
+    {
+        $uid = UID::hashGenerate('foo');
+        $this->assertEquals(UID::VERSION_0, $uid->version());
+        $this->assertEquals(5407043158477369760, $uid->value);
+        $this->assertEquals('152vwtziw5eow', (string) $uid);
+    }
+
     public function test_invalid_version_generation()
     {
         $this->expectException(InvalidArgumentException::class);

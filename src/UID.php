@@ -138,6 +138,24 @@ class UID implements Stringable, JsonSerializable
     }
 
     /**
+     * Generate a UID deterministically from a source string, using a hash to produce a pseudo-random but deterministic value. Useful when you need deterministic UIDs but the security of a full HMAC hash is not required.
+     */
+    public static function hashGenerate(string $source): UID
+    {
+        // hmac to get a deterministic but unpredictable hash and truncate to 64 bits
+        $hash = hash('sha256', $source);
+        $int = (int) base_convert(substr($hash, 0, 16), 16, 10);
+        // shift 64-bit value right 4 to get 58 random bits
+        $int = $int >> 6;
+        // 4 lsb are 0000 for version 0
+        $int = $int << 4;
+        // make 63rd bit 1
+        $int = $int | 1 << 62;
+        // return finished UID
+        return new UID($int);
+    }
+
+    /**
      * Construct a UID object from an integer representation.
      * 
      * @throws InvalidArgumentException if the integer is not a valid UID

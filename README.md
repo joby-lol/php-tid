@@ -4,14 +4,14 @@ A simple and lightweight time-ordered random ID library designed for human-scale
 
 ## What is smolUID?
 
-smolUID is a simple, lightweight library for generating unique, time-ordered, human-readable IDs. Unlike full UUIDs or simple auto-incrementing database IDs, UIDs are:
+smolUID is a simple, lightweight library for generating unique, time-ordered, human-readable IDs. Unlike full UUIDs, more complex enterprise-grade time-orderd IDs, or simple auto-incrementing database IDs, UIDs are:
 
-- **Human-readable**: String representations as base 36 integers for more compact format for URLs, markup, etc.
+- **Human-readable**: String representations as base 36 integers for more compact (10-13 characters) format for URLs, markup, etc.
 - **Time-ordered**: Can be represented as integers or strings, and both are naturally sortable by rough creation time
 - **URL-safe**: No special characters that are hard to type or need encoding in URLs
 - **Privacy-conscious**: Can drop optional amounts of timestamp precision to avoid leaking exact creation times
 - **Ergonomic**: Strings can be easily converted from the concise format back into the underlying integer, or vice versa
-- **Future-proof**: Currently all values are 63 bits, meaning that they will fit in the default integer representation of almost any language/environment, but the length is not fixed so future versions may expand that length if needed.
+- **Future-proof**: Currently underlying integer values are 63 bits, so they fit in a signed 64-bit integer
 
 ## Why smolUID?
 
@@ -19,8 +19,8 @@ Not every project needs guaranteed globally unique IDs or distributed systems. F
 
 - **Human scale**: Designed for applications where IDs might be seen, shared, or even typed by humans
 - **Simplicity**: No external dependencies or complex setup
-- **Lightweight**: Minimal overhead and easy integration
-- **Chronological**: Natural time-based ordering, with options to keep varying amounts of precision hidden
+- **Lightweight**: Minimal overhead and easy integration (it's just an integer!)
+- **Chronological**: Natural time-based ordering in both integer and string representations
 
 ## Installation
 
@@ -53,7 +53,7 @@ $uid = UID::generate(UID::VERSION_1_1);
 | 1.3     | ~3 days            | 29          | 10            | ~1.4 billion/day |
 | 1.4     | ~12 days           | 31          | 10            | ~1.4 billion/day |
 
-### UID deterministically derived from string
+### UID from internal string representation
 
 ```php
 use Joby\Smol\UID\UID;
@@ -61,8 +61,6 @@ use Joby\Smol\UID\UID;
 // Create a UID from a string
 $uid = UID::fromString("abcdefgh");
 ```
-
-### Getting UID parts
 
 ```php
 use Joby\Smol\UID\UID;
@@ -130,22 +128,27 @@ UIDs can also be generated deterministically, if you need to use them in a manne
 ```php
 use Joby\Smol\UID\UID;
 
-// generate from a string
-$uid = UID::hashGenerate('some value to generate from', 'secret key');
+// derive from a simple SHA256 hash
+// faster and easier, but underlying values are less protected
+$uid = UID::hashGenerate('some value to generate from');
+
+// derive from an HMAC hash with secret key
+// makes guessing underlying values much harder
+$uid = UID::hmacGenerate('some value to generate from', 'secret key');
 ```
 
 ## How It Works
 
-Each UID consists of a single integer value with three parts (starting with the least significant bit):
+Each UID consists of a single integer value with three parts:
 
-1. 4-bit version identifier, from which the other two parts' lengths are determined
+1. 4-bit version identifier in the least significant bits, from which the other two parts' lengths are determined
 2. 0 or more bits of random data
-3. 0 or more bits of time data, with varying amounts of precision dropped by truncating least significant bits
+3. 0 or more bits of time data in the most significant bits, with varying amounts of precision dropped by truncating least significant bits of the current time
 
-The combination is encoded in base-36 (alphanumeric) when a string representation is required, but can also be stored as an integer.
+The combination is encoded in base-36 (alphanumeric) when a string representation is required, but can also be stored as an integer. All current versions are at most 63 bits long, allowing them to fit in a normal 64-bit signed integer. This means you can work with their underlying values easily and efficiently in almost any environment, with no special handling.
 
 ## Limitations
 
 - Not designed or suitable for distributed systems requiring guaranteed global uniqueness
-- Time ordering may be approximate due to the dropped precision bits
+- Time ordering is varying levels of approximate due to the dropped precision bits
 - No built-in collision detection (though collisions are extremely unlikely at human scale applications)
