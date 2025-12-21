@@ -53,31 +53,24 @@ $uid = UID::generate(UID::VERSION_1_1);
 | 1.3     | ~3 days            | 29          | 10            | ~1.4 billion/day |
 | 1.4     | ~12 days           | 31          | 10            | ~1.4 billion/day |
 
-### UID from internal string representation
+### Getting the string representation
 
 ```php
 use Joby\Smol\UID\UID;
 
-// Create a UID from a string
-$uid = UID::fromString("abcdefgh");
+// Generate a new UID
+// in this case a fully random one
+$uid = UID::generate();
+
+// Can be used as or cast to a string
+// will be a 10-13 character alphanumeric string
+$string = (string) $uid;
+
+// can be turned back into a UID object
+$sameUID = UID::fromString($string);
 ```
 
-```php
-use Joby\Smol\UID\UID;
-
-$uid = new UID();
-
-// Get the approximate timestamp when this UID was created
-// This returns the lower bound of when this UID was created
-$timestamp = $uid->time();
-
-// Get the entropy bits (random portion) of the UID
-$entropy = $uid->random();
-```
-
-## Advanced Usage
-
-### Using the underlying integer
+### Getting the underlying integer
 
 ```php
 use Joby\Smol\UID\UID;
@@ -89,24 +82,27 @@ $uid = new UID();
 $int = $uid->value;
 
 // Convert back to a UID
-$sameUID = new UID($int);
-// or
 $sameUID = UID::fromInt($int);
 ```
 
-### Serialization
+## Advanced Usage
 
-UID objects can be serialized and unserialized:
+### Getting the underlying parts
 
 ```php
 use Joby\Smol\UID\UID;
 
 $uid = new UID();
-$serialized = serialize($uid);
-$unserialized = unserialize($serialized);
 
-echo $uid === $unserialized; // false (different objects)
-echo $uid->value === $unserialized->value; // true (same ID value)
+// Get the version bits
+$version = $uid->version();
+
+// Get the approximate timestamp when this UID was created
+// This returns the lower bound of when this UID was created
+$timestamp = $uid->time();
+
+// Get the random bits of the UID
+$random = $uid->random();
 ```
 
 ### Using with databases
@@ -123,7 +119,7 @@ $db->query("INSERT INTO users (id, name) VALUES (?, ?)", [$uid->value, "John"]);
 
 ### Deterministic generation
 
-UIDs can also be generated deterministically, if you need to use them in a manner similar to a hash. In this case they are produced as version 0 UIDs with no time data, and their random data is produced by truncating a sha256 hmac hash of the provided string.
+UIDs can also be generated deterministically, if you need to use them in a manner similar to a hash. In this case they are produced as version 0 UIDs with no time data, and their random data is produced by truncating a sha256 hmac or simple hash of the provided string.
 
 ```php
 use Joby\Smol\UID\UID;
